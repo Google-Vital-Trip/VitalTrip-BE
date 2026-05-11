@@ -1,15 +1,14 @@
 package com.vitaltrip.location.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vitaltrip.common.config.GoogleProperties;
 import com.vitaltrip.common.exception.AppException;
 import com.vitaltrip.common.response.ErrorCode;
 import com.vitaltrip.location.dto.NearbyFacilityResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,12 +29,8 @@ public class GooglePlacesService {
             "emergency", List.of("hospital")
     );
 
-    private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
-
-    @Value("${app.google.places-api-key}")
-    private String placesApiKey;
-
+    private final RestClient restClient;
+    private final GoogleProperties googleProperties;
     private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
 
     public List<NearbyFacilityResponse> searchNearby(
@@ -69,18 +64,19 @@ public class GooglePlacesService {
                     )
             ));
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("X-Goog-Api-Key", placesApiKey);
-            headers.set("X-Goog-FieldMask", FIELD_MASK);
+            Map<String, Object> response = restClient.post()
+                    .uri(PLACES_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("X-Goog-Api-Key", googleProperties.placesApiKey())
+                    .header("X-Goog-FieldMask", FIELD_MASK)
+                    .body(body)
+                    .retrieve()
+                    .body(Map.class);
 
-            ResponseEntity<Map> response = restTemplate.exchange(
-                    PLACES_URL, HttpMethod.POST, new HttpEntity<>(body, headers), Map.class);
-
-            if (response.getBody() == null) return Collections.emptyList();
+            if (response == null) return Collections.emptyList();
 
             List<Map<String, Object>> places =
-                    (List<Map<String, Object>>) response.getBody().getOrDefault("places", Collections.emptyList());
+                    (List<Map<String, Object>>) response.getOrDefault("places", Collections.emptyList());
 
             List<NearbyFacilityResponse> results = new ArrayList<>();
             for (Map<String, Object> place : places) {
@@ -122,8 +118,7 @@ public class GooglePlacesService {
         double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
                 * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return Math.round(R * c / 100.0) / 10.0;
+        return Math.round(6_371_000.0 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) / 100.0) / 10.0;
     }
 
     private double toDouble(Object value) {

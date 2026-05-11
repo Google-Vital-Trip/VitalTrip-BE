@@ -1,12 +1,13 @@
 package com.vitaltrip.common.security;
 
+import com.vitaltrip.common.config.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -15,19 +16,10 @@ import java.util.Date;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtUtil {
 
-    @Value("${app.jwt.secret}")
-    private String secret;
-
-    @Value("${app.jwt.refresh-secret}")
-    private String refreshSecret;
-
-    @Value("${app.jwt.expires-in}")
-    private String expiresIn;
-
-    @Value("${app.jwt.refresh-expires-in}")
-    private String refreshExpiresIn;
+    private final JwtProperties jwtProperties;
 
     private SecretKey accessKey;
     private SecretKey refreshKey;
@@ -36,8 +28,8 @@ public class JwtUtil {
 
     @PostConstruct
     public void init() {
-        accessKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        refreshKey = Keys.hmacShaKeyFor(refreshSecret.getBytes(StandardCharsets.UTF_8));
+        accessKey = Keys.hmacShaKeyFor(jwtProperties.secret().getBytes(StandardCharsets.UTF_8));
+        refreshKey = Keys.hmacShaKeyFor(jwtProperties.refreshSecret().getBytes(StandardCharsets.UTF_8));
     }
 
     private long parseDurationToMs(String duration) {
@@ -55,7 +47,7 @@ public class JwtUtil {
                 .subject(userId.toString())
                 .claim("email", email)
                 .issuedAt(now)
-                .expiration(new Date(now.getTime() + parseDurationToMs(expiresIn)))
+                .expiration(new Date(now.getTime() + parseDurationToMs(jwtProperties.expiresIn())))
                 .signWith(accessKey)
                 .compact();
     }
@@ -66,7 +58,7 @@ public class JwtUtil {
                 .subject(userId.toString())
                 .claim("email", email)
                 .issuedAt(now)
-                .expiration(new Date(now.getTime() + parseDurationToMs(refreshExpiresIn)))
+                .expiration(new Date(now.getTime() + parseDurationToMs(jwtProperties.refreshExpiresIn())))
                 .signWith(refreshKey)
                 .compact();
     }
@@ -102,7 +94,7 @@ public class JwtUtil {
     public boolean validateAccessToken(String token) {
         try {
             Claims claims = parseAccessToken(token);
-            return claims.get("type") == null; // temp token 제외
+            return claims.get("type") == null;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
