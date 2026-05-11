@@ -1,6 +1,7 @@
-package com.vitaltrip.common.response;
+package com.vitaltrip.common.exception;
 
-import com.vitaltrip.common.exception.AppException;
+import com.vitaltrip.common.response.ApiResponse;
+import com.vitaltrip.common.response.ErrorCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
