@@ -1,13 +1,12 @@
-package jpabook.vitaltripspring;
+package com.vitaltrip;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class VitaltripSpringApplicationTests {
+class VitaltripApplicationTests {
 
     @Test
     void contextLoads() {
     }
-
 }
