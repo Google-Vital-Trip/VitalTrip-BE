@@ -1,13 +1,11 @@
-package jpabook.vitaltripspring;
+package com.vitaltrip;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class VitaltripSpringApplication {
-
+public class VitaltripApplication {
     public static void main(String[] args) {
-        SpringApplication.run(VitaltripSpringApplication.class, args);
+        SpringApplication.run(VitaltripApplication.class, args);
     }
-
 }
