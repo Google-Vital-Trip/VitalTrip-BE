@@ -39,3 +39,14 @@ app:
     allowed-origin: ${ALLOWED_ORIGIN:*}
   frontend-url: ${FRONTEND_URL:https://aivitaltrip.com}
   node-env: ${NODE_ENV:development}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    display-request-duration: true
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
